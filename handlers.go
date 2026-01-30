@@ -71,12 +71,12 @@ func newServer() *server {
 	}
 }
 
-func registerRoutes(s *server) {
-	http.HandleFunc("/xendit/disbursements", s.handleCreateDisbursement)
-	http.HandleFunc("/xendit/healthz", handleHealth)
-	http.HandleFunc("/xendit/healthz-callback", handleCallbackHealth)
-	http.HandleFunc("/xendit/simulate/success", s.handleSimulateSuccess)
-	http.HandleFunc("/xendit/reset", s.handleReset)
+func registerRoutes(mux *http.ServeMux, s *server) {
+	mux.HandleFunc("/xendit/disbursements", s.handleCreateDisbursement)
+	mux.HandleFunc("/xendit/healthz", handleHealth)
+	mux.HandleFunc("/xendit/healthz-callback", handleCallbackHealth)
+	mux.HandleFunc("/xendit/simulate/success", s.handleSimulateSuccess)
+	mux.HandleFunc("/xendit/reset", s.handleReset)
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -142,6 +142,7 @@ func (s *server) handleCreateDisbursement(w http.ResponseWriter, r *http.Request
 
 	req, err := decodeDisbursementRequest(r)
 	if err != nil {
+		log.Printf("disbursement request decode failed: %v", err)
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
@@ -164,6 +165,7 @@ func (s *server) handleSimulateSuccess(w http.ResponseWriter, r *http.Request) {
 
 	req, err := decodeDisbursementRequest(r)
 	if err != nil {
+		log.Printf("simulate success request decode failed: %v", err)
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}

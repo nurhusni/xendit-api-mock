@@ -11,9 +11,11 @@ func main() {
 	log.Printf("xendit-api-mock listening on :%s", addr)
 
 	s := newServer()
-	registerRoutes(s)
+	mux := http.NewServeMux()
+	registerRoutes(mux, s)
+	handler := loggingMiddleware(mux)
 
-	if err := http.ListenAndServe(":"+addr, nil); err != nil {
+	if err := http.ListenAndServe(":"+addr, handler); err != nil {
 		log.Fatal(err)
 	}
 }
