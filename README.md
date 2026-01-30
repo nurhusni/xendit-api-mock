@@ -19,6 +19,27 @@ go run .
 
 By default it listens on `:8080`.
 
+## Run with Docker
+
+```bash
+docker build -t xendit-api-mock .
+docker run --env-file .env -p 8080:8080 xendit-api-mock
+```
+
+## Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+## Run on Railway
+
+Railway will build using the Dockerfile. Set these variables in Railway:
+
+- `CALLBACK_BASE_URL` (required)
+- `PORT` (optional, Railway sets this automatically)
+- `XENDIT_USER_ID` (optional)
+
 ## Expose via ngrok
 
 ```bash
