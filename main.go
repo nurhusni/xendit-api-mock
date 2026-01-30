@@ -138,7 +138,23 @@ func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("callback health response status=%d body=%s", resp.StatusCode, string(body))
+	if json.Valid(body) {
+		var payload interface{}
+		if err := json.Unmarshal(body, &payload); err != nil {
+			log.Printf("callback health response status=%d body=%s", resp.StatusCode, string(body))
+			writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+			return
+		}
+		pretty, err := json.MarshalIndent(payload, "", "  ")
+		if err != nil {
+			log.Printf("callback health response status=%d body=%s", resp.StatusCode, string(body))
+			writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+			return
+		}
+		log.Printf("callback health response status=%d json=%s", resp.StatusCode, string(pretty))
+	} else {
+		log.Printf("callback health response status=%d body=%s", resp.StatusCode, string(body))
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
