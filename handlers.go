@@ -72,11 +72,11 @@ func newServer() *server {
 }
 
 func registerRoutes(mux *http.ServeMux, s *server) {
-	mux.HandleFunc("/xendit/disbursements", s.handleCreateDisbursement)
-	mux.HandleFunc("/xendit/healthz", handleHealth)
-	mux.HandleFunc("/xendit/healthz-callback", handleCallbackHealth)
-	mux.HandleFunc("/xendit/simulate/success", s.handleSimulateSuccess)
-	mux.HandleFunc("/xendit/reset", s.handleReset)
+	mux.Handle("/xendit/disbursements", loggingHandler("handleCreateDisbursement", http.HandlerFunc(s.handleCreateDisbursement)))
+	mux.Handle("/xendit/healthz", loggingHandler("handleHealth", http.HandlerFunc(handleHealth)))
+	mux.Handle("/xendit/healthz-callback", loggingHandler("handleCallbackHealth", http.HandlerFunc(handleCallbackHealth)))
+	mux.Handle("/xendit/simulate/success", loggingHandler("handleSimulateSuccess", http.HandlerFunc(s.handleSimulateSuccess)))
+	mux.Handle("/xendit/reset", loggingHandler("handleReset", http.HandlerFunc(s.handleReset)))
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {

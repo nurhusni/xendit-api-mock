@@ -13,9 +13,8 @@ func main() {
 	s := newServer()
 	mux := http.NewServeMux()
 	registerRoutes(mux, s)
-	handler := loggingMiddleware(mux)
 
-	if err := http.ListenAndServe(":"+addr, handler); err != nil {
+	if err := http.ListenAndServe(":"+addr, mux); err != nil {
 		log.Fatal(err)
 	}
 }

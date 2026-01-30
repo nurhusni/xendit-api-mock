@@ -28,48 +28,48 @@ func (r *responseRecorder) Write(data []byte) (int, error) {
 	return r.ResponseWriter.Write(data)
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
+func loggingHandler(name string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Printf("[loggingMiddleware] request read failed method=%s path=%s error=%v", r.Method, r.URL.Path, err)
+			log.Printf("[%s.logRequest] request read failed method=%s path=%s error=%v", name, r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		_ = r.Body.Close()
 		r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 
-		logRequest(r, bodyBytes)
+		logRequest(name, r, bodyBytes)
 
 		recorder := &responseRecorder{ResponseWriter: w}
 		defer func() {
 			if recErr := recover(); recErr != nil {
-				log.Printf("[loggingMiddleware] request panic method=%s path=%s error=%v", r.Method, r.URL.Path, recErr)
+				log.Printf("[%s.logResponse] request panic method=%s path=%s error=%v", name, r.Method, r.URL.Path, recErr)
 				recorder.WriteHeader(http.StatusInternalServerError)
 			}
-			logResponse(r, recorder)
+			logResponse(name, r, recorder)
 		}()
 
 		next.ServeHTTP(recorder, r)
 	})
 }
 
-func logRequest(r *http.Request, body []byte) {
+func logRequest(name string, r *http.Request, body []byte) {
 	bodyLog := formatBody(body)
-	log.Printf("[logRequest] request method=%s path=%s body=%s", r.Method, r.URL.Path, bodyLog)
+	log.Printf("[%s.logRequest] request method=%s path=%s body=%s", name, r.Method, r.URL.Path, bodyLog)
 }
 
-func logResponse(r *http.Request, recorder *responseRecorder) {
+func logResponse(name string, r *http.Request, recorder *responseRecorder) {
 	status := recorder.status
 	if status == 0 {
 		status = http.StatusOK
 	}
 	responseBody := formatBody(recorder.body.Bytes())
 	if status >= http.StatusBadRequest {
-		log.Printf("[logResponse] response error method=%s path=%s status=%d body=%s", r.Method, r.URL.Path, status, responseBody)
+		log.Printf("[%s.logResponse] response error method=%s path=%s status=%d body=%s", name, r.Method, r.URL.Path, status, responseBody)
 		return
 	}
-	log.Printf("[logResponse] response success method=%s path=%s status=%d body=%s", r.Method, r.URL.Path, status, responseBody)
+	log.Printf("[%s.logResponse] response success method=%s path=%s status=%d body=%s", name, r.Method, r.URL.Path, status, responseBody)
 }
 
 func formatBody(body []byte) string {
