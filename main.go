@@ -115,7 +115,7 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 
 func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
 	callbackURL := "https://sandbox.api.of.ayoconnect.id/api/v1/it/xendit/disbursement/callback"
-	req, err := http.NewRequest(http.MethodGet, callbackURL, nil)
+	req, err := http.NewRequest(http.MethodPost, callbackURL, nil)
 	if err != nil {
 		log.Printf("callback health request build failed: %v", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"status": "error"})
@@ -135,6 +135,12 @@ func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("callback health response read failed: %v", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"status": "error"})
+		return
+	}
+
+	if len(body) == 0 {
+		log.Printf("callback health response status=%d body={empty}", resp.StatusCode)
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 		return
 	}
 
