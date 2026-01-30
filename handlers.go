@@ -259,6 +259,11 @@ func sendCallback(req disbursementRequest, status string) error {
 		return err
 	}
 	request.Header.Set("Content-Type", "application/json")
+	if token := getenv("CALLBACK_TOKEN", ""); token != "" {
+		request.Header.Set("X-Callback-Token", token)
+	} else {
+		log.Printf("[sendCallback] CALLBACK_TOKEN is not set")
+	}
 	log.Printf("[sendCallback] request method=%s url=%s body=%s", request.Method, request.URL.String(), formatBody(body))
 
 	client := &http.Client{Timeout: 10 * time.Second}
