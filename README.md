@@ -15,7 +15,7 @@ Endpoints
 ## Run locally
 
 ```bash
-cd /Users/panjiahmadnurhusni/Development/xendit-api-mock
+cd /path/to/xendit-api-mock
 go run .
 ```
 
@@ -38,7 +38,7 @@ docker compose up --build
 
 Railway will build using the Dockerfile. Set these variables in Railway:
 
-- `CALLBACK_BASE_URL` (required)
+- `CALLBACK_URL` (required)
 - `PORT` (optional, Railway sets this automatically)
 - `XENDIT_USER_ID` (optional)
 
@@ -84,7 +84,7 @@ The mock loads `.env` on startup and will POST callbacks to `CALLBACK_URL`.
 Use `SCENARIO_FILE` to control responses:
 
 ```bash
-SCENARIO_FILE=/Users/panjiahmadnurhusni/Development/xendit-api-mock/scenario.sample.json go run .
+SCENARIO_FILE=/path/to/xendit-api-mock/scenario.sample.json go run .
 ```
 
 Rules are matched by `account_number`.
