@@ -147,7 +147,7 @@ func (s *server) handleCreateDisbursement(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	status := s.pickStatus(req)
+	status := normalizeStatus(s.pickStatus(req))
 
 	resp := buildDisbursementResponse(req, status)
 	if err := sendCallback(req, status); err != nil {
@@ -170,7 +170,7 @@ func (s *server) handleSimulateSuccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status := "COMPLETED"
+	status := normalizeStatus("COMPLETED")
 	resp := buildDisbursementResponse(req, status)
 	if err := sendCallback(req, status); err != nil {
 		log.Printf("callback failed: %v", err)
@@ -237,6 +237,16 @@ func buildDisbursementResponse(req disbursementRequest, status string) disbursem
 	}
 }
 
+func normalizeStatus(status string) string {
+	if status == "COMPLETED" {
+		return "COMPLETED"
+	}
+	if status == "FAILED" {
+		return "FAILED"
+	}
+	return "FAILED"
+}
+
 func (s *server) handleReset(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -272,6 +282,8 @@ func sendCallback(req disbursementRequest, status string) error {
 		// #NOTE: set CALLBACK_URL env to the full callback URL
 		return nil
 	}
+
+	status = normalizeStatus(status)
 	userID := getenv("XENDIT_USER_ID", "user_mock")
 	disbursementID := "disb_" + shortHash(req.ExternalID)
 	webhookID := "wh_" + shortHash(disbursementID+":"+status)
