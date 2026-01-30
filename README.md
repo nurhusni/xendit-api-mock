@@ -10,6 +10,7 @@ Endpoints
 - `POST /xendit/disbursements`
 - `GET /xendit/healthz`
 - `GET /xendit/healthz-callback`
+- `POST /xendit/simulate/success`
 
 ## Run locally
 
@@ -118,6 +119,14 @@ curl http://localhost:8080/xendit/healthz-callback
 ```
 
 This endpoint calls the sandbox disbursement callback URL and logs the response.
+
+## Simulate success flow
+
+```bash
+curl -X POST http://localhost:8080/xendit/simulate/success
+```
+
+Optional JSON body supports the same fields as `/xendit/disbursements`.
 
 ## Notes
 

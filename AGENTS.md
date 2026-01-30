@@ -5,7 +5,10 @@
 ## STRUCTURE
 ```
 ./
-├── main.go               # HTTP server + mock behavior
+├── main.go               # Startup only
+├── handlers.go           # HTTP handlers + core logic
+├── testcases.go          # Scenario/test-case logic
+├── config.go             # Env + scenario loading
 ├── scenario.sample.json  # Scenario examples
 ├── Dockerfile            # Container build
 ├── docker-compose.yml    # Local compose run
@@ -14,8 +17,9 @@
 ```
 
 ## WHERE TO LOOK
-- Core behavior and handlers: `main.go`
-- Scenario rules and outcome logic: `main.go`
+- Core behavior and handlers: `handlers.go`
+- Scenario rules and outcome logic: `testcases.go`
+- Startup/bootstrap: `main.go`
 - Runtime/env setup: `README.md`
 - Container/runtime: `Dockerfile`, `docker-compose.yml`, `railway.toml`
 
