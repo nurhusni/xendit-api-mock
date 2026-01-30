@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -100,6 +101,7 @@ func main() {
 
 	http.HandleFunc("/xendit/disbursements", s.handleCreateDisbursement)
 	http.HandleFunc("/xendit/healthz", handleHealth)
+	http.HandleFunc("/xendit/healthz-callback", handleCallbackHealth)
 	http.HandleFunc("/xendit/reset", s.handleReset)
 
 	if err := http.ListenAndServe(":"+addr, nil); err != nil {
@@ -108,6 +110,35 @@ func main() {
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
+	callbackURL := "https://sandbox.api.of.ayoconnect.id/api/v1/it/xendit/disbursement/callback"
+	req, err := http.NewRequest(http.MethodGet, callbackURL, nil)
+	if err != nil {
+		log.Printf("callback health request build failed: %v", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"status": "error"})
+		return
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("callback health request failed: %v", err)
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "error"})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("callback health response read failed: %v", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"status": "error"})
+		return
+	}
+
+	log.Printf("callback health response status=%d body=%s", resp.StatusCode, string(body))
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 

@@ -9,6 +9,7 @@ Behavior
 Endpoints
 - `POST /xendit/disbursements`
 - `GET /xendit/healthz`
+- `GET /xendit/healthz-callback`
 
 ## Run locally
 
@@ -110,6 +111,14 @@ To clear in-memory attempts and ordering:
 curl -X POST http://localhost:8080/xendit/reset
 ```
 
+## Callback health check
+
+```bash
+curl http://localhost:8080/xendit/healthz-callback
+```
+
+This endpoint calls the sandbox disbursement callback URL and logs the response.
+
 ## Notes
 
 - The mock keeps state in memory. Restarting the mock resets the `FAILED`-first behavior.
@@ -120,3 +129,7 @@ curl -X POST http://localhost:8080/xendit/reset
 PORT=9090 go run .
 ngrok http 9090
 ```
+
+## Conventional Commits
+
+This repo enforces Conventional Commits on pull requests via GitHub Actions.
