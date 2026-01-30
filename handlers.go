@@ -279,8 +279,7 @@ func shortHash(value string) string {
 func sendCallback(req disbursementRequest, status string) error {
 	callbackURL := getenv("CALLBACK_URL", "")
 	if callbackURL == "" {
-		// #NOTE: set CALLBACK_URL env to the full callback URL
-		return nil
+		return fmt.Errorf("CALLBACK_URL is not set")
 	}
 
 	status = normalizeStatus(status)
