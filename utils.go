@@ -27,25 +27,25 @@ func decodeDisbursementRequest(r *http.Request) (disbursementRequest, error) {
 		req.BankCode = "BCA"
 	}
 	if req.AccountHolderName == "" {
-		req.AccountHolderName = "Mock User"
+		req.AccountHolderName = "xamock user"
 	}
 	if req.AccountNumber == "" {
-		req.AccountNumber = "1234567890"
+		req.AccountNumber = "xamock-1234567890"
 	}
 	if req.Description == "" {
-		req.Description = "mock disbursement"
+		req.Description = "xamock disbursement"
 	}
 	return req, nil
 }
 
 func defaultDisbursementRequest() disbursementRequest {
 	return disbursementRequest{
-		ExternalID:        fmt.Sprintf("ext_success_%s", shortHash(time.Now().Format(time.RFC3339Nano))),
+		ExternalID:        fmt.Sprintf("xamock_ext_%s", shortHash(time.Now().Format(time.RFC3339Nano))),
 		Amount:            10000,
 		BankCode:          "BCA",
-		AccountHolderName: "Mock User",
-		AccountNumber:     "1234567890",
-		Description:       "mock disbursement",
+		AccountHolderName: "xamock user",
+		AccountNumber:     "xamock-1234567890",
+		Description:       "xamock disbursement",
 	}
 }
 
