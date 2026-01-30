@@ -98,9 +98,9 @@ func main() {
 		scenario:   loadScenario(getenv("SCENARIO_FILE", "")),
 	}
 
-	http.HandleFunc("/disbursements", s.handleCreateDisbursement)
-	http.HandleFunc("/healthz", handleHealth)
-	http.HandleFunc("/reset", s.handleReset)
+	http.HandleFunc("/xendit/disbursements", s.handleCreateDisbursement)
+	http.HandleFunc("/xendit/healthz", handleHealth)
+	http.HandleFunc("/xendit/reset", s.handleReset)
 
 	if err := http.ListenAndServe(":"+addr, nil); err != nil {
 		log.Fatal(err)

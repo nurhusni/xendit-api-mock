@@ -7,8 +7,8 @@ Behavior
 - Scenario mode: per-account scripted outcomes (order-based or by exact `external_id`).
 
 Endpoints
-- `POST /disbursements`
-- `GET /healthz`
+- `POST /xendit/disbursements`
+- `GET /xendit/healthz`
 
 ## Run locally
 
@@ -107,7 +107,7 @@ Example file: `scenario.sample.json`
 To clear in-memory attempts and ordering:
 
 ```bash
-curl -X POST http://localhost:8080/reset
+curl -X POST http://localhost:8080/xendit/reset
 ```
 
 ## Notes
