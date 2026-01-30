@@ -265,13 +265,11 @@ func shortHash(value string) string {
 }
 
 func sendCallback(req disbursementRequest, status string) error {
-	baseURL := getenv("CALLBACK_BASE_URL", "")
-	if baseURL == "" {
-		// #NOTE: set CALLBACK_BASE_URL env to the service base URL (e.g. https://sandbox.example.com)
+	callbackURL := getenv("CALLBACK_URL", "")
+	if callbackURL == "" {
+		// #NOTE: set CALLBACK_URL env to the full callback URL
 		return nil
 	}
-
-	callbackURL := fmt.Sprintf("%s/api/v1/it/xendit/disbursement/callback", baseURL)
 	userID := getenv("XENDIT_USER_ID", "user_mock")
 	disbursementID := "disb_" + shortHash(req.ExternalID)
 	webhookID := "wh_" + shortHash(disbursementID+":"+status)

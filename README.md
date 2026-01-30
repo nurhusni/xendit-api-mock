@@ -68,11 +68,10 @@ Restart the consumer service in sandbox.
 Create a local `.env` file (gitignored) to configure the callback target:
 
 ```bash
-CALLBACK_BASE_URL=https://sandbox.example.com
+CALLBACK_URL=https://sandbox.example.com/api/v1/it/xendit/disbursement/callback
 ```
 
-The mock loads `.env` on startup and will POST callbacks to:
-`$CALLBACK_BASE_URL/api/v1/it/xendit/disbursement/callback`.
+The mock loads `.env` on startup and will POST callbacks to `CALLBACK_URL`.
 
 ## Test the retry flow
 
