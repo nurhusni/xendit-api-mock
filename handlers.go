@@ -84,7 +84,12 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
-	callbackURL := "https://sandbox.api.of.ayoconnect.id/api/v1/it/xendit/disbursement/callback"
+	callbackURL := getenv("CALLBACK_URL", "")
+	if callbackURL == "" {
+		log.Printf("[handleCallbackHealth] CALLBACK_URL is not set")
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"status": "error"})
+		return
+	}
 	req, err := http.NewRequest(http.MethodPost, callbackURL, nil)
 	if err != nil {
 		log.Printf("callback health request build failed: %v", err)
@@ -177,64 +182,6 @@ func (s *server) handleSimulateSuccess(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, resp)
-}
-
-func decodeDisbursementRequest(r *http.Request) (disbursementRequest, error) {
-	var req disbursementRequest
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&req); err != nil {
-		if err == io.EOF {
-			return defaultDisbursementRequest(), nil
-		}
-		return disbursementRequest{}, fmt.Errorf("invalid json")
-	}
-	if req.ExternalID == "" {
-		req.ExternalID = defaultDisbursementRequest().ExternalID
-	}
-	if req.Amount == 0 {
-		req.Amount = 10000
-	}
-	if req.BankCode == "" {
-		req.BankCode = "BCA"
-	}
-	if req.AccountHolderName == "" {
-		req.AccountHolderName = "Mock User"
-	}
-	if req.AccountNumber == "" {
-		req.AccountNumber = "1234567890"
-	}
-	if req.Description == "" {
-		req.Description = "mock disbursement"
-	}
-	return req, nil
-}
-
-func defaultDisbursementRequest() disbursementRequest {
-	return disbursementRequest{
-		ExternalID:        fmt.Sprintf("ext_success_%s", shortHash(time.Now().Format(time.RFC3339Nano))),
-		Amount:            10000,
-		BankCode:          "BCA",
-		AccountHolderName: "Mock User",
-		AccountNumber:     "1234567890",
-		Description:       "mock disbursement",
-	}
-}
-
-func buildDisbursementResponse(req disbursementRequest, status string) disbursementResponse {
-	now := time.Now().Format(time.RFC3339)
-	userID := getenv("XENDIT_USER_ID", "user_mock")
-	return disbursementResponse{
-		ID:                      "disb_" + shortHash(req.ExternalID),
-		UserID:                  userID,
-		ExternalID:              req.ExternalID,
-		Amount:                  req.Amount,
-		BankCode:                req.BankCode,
-		AccountHolderName:       req.AccountHolderName,
-		DisbursementDescription: req.Description,
-		Status:                  status,
-		Created:                 now,
-		Updated:                 now,
-	}
 }
 
 func normalizeStatus(status string) string {
