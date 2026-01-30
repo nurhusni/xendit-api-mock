@@ -47,13 +47,13 @@ func loadScenario(path string) *scenarioConfig {
 
 	file, err := os.ReadFile(path)
 	if err != nil {
-		log.Printf("failed to read scenario file: %v", err)
+		log.Printf("[loadScenario] failed to read scenario file: %v", err)
 		return nil
 	}
 
 	var cfg scenarioConfig
 	if err := json.Unmarshal(file, &cfg); err != nil {
-		log.Printf("failed to parse scenario file: %v", err)
+		log.Printf("[loadScenario] failed to parse scenario file: %v", err)
 		return nil
 	}
 

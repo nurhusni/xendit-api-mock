@@ -32,7 +32,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Printf("request read failed method=%s path=%s error=%v", r.Method, r.URL.Path, err)
+			log.Printf("[loggingMiddleware] request read failed method=%s path=%s error=%v", r.Method, r.URL.Path, err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -44,7 +44,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		recorder := &responseRecorder{ResponseWriter: w}
 		defer func() {
 			if recErr := recover(); recErr != nil {
-				log.Printf("request panic method=%s path=%s error=%v", r.Method, r.URL.Path, recErr)
+				log.Printf("[loggingMiddleware] request panic method=%s path=%s error=%v", r.Method, r.URL.Path, recErr)
 				recorder.WriteHeader(http.StatusInternalServerError)
 			}
 			logResponse(r, recorder)
@@ -56,7 +56,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 func logRequest(r *http.Request, body []byte) {
 	bodyLog := formatBody(body)
-	log.Printf("request method=%s path=%s body=%s", r.Method, r.URL.Path, bodyLog)
+	log.Printf("[logRequest] request method=%s path=%s body=%s", r.Method, r.URL.Path, bodyLog)
 }
 
 func logResponse(r *http.Request, recorder *responseRecorder) {
@@ -66,10 +66,10 @@ func logResponse(r *http.Request, recorder *responseRecorder) {
 	}
 	responseBody := formatBody(recorder.body.Bytes())
 	if status >= http.StatusBadRequest {
-		log.Printf("request error method=%s path=%s status=%d body=%s", r.Method, r.URL.Path, status, responseBody)
+		log.Printf("[logResponse] response error method=%s path=%s status=%d body=%s", r.Method, r.URL.Path, status, responseBody)
 		return
 	}
-	log.Printf("request success method=%s path=%s status=%d body=%s", r.Method, r.URL.Path, status, responseBody)
+	log.Printf("[logResponse] response success method=%s path=%s status=%d body=%s", r.Method, r.URL.Path, status, responseBody)
 }
 
 func formatBody(body []byte) string {

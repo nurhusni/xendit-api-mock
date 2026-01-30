@@ -92,7 +92,7 @@ func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
 	}
 	req, err := http.NewRequest(http.MethodPost, callbackURL, nil)
 	if err != nil {
-		log.Printf("callback health request build failed: %v", err)
+		log.Printf("[handleCallbackHealth] request build failed: %v", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"status": "error"})
 		return
 	}
@@ -100,7 +100,7 @@ func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("callback health request failed: %v", err)
+		log.Printf("[handleCallbackHealth] request failed: %v", err)
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "error"})
 		return
 	}
@@ -108,13 +108,13 @@ func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("callback health response read failed: %v", err)
+		log.Printf("[handleCallbackHealth] response read failed: %v", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"status": "error"})
 		return
 	}
 
 	if len(body) == 0 {
-		log.Printf("callback health response status=%d body={empty}", resp.StatusCode)
+		log.Printf("[handleCallbackHealth] response status=%d body={empty}", resp.StatusCode)
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 		return
 	}
@@ -122,19 +122,19 @@ func handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
 	if json.Valid(body) {
 		var payload interface{}
 		if err := json.Unmarshal(body, &payload); err != nil {
-			log.Printf("callback health response status=%d body=%s", resp.StatusCode, string(body))
+			log.Printf("[handleCallbackHealth] response status=%d body=%s", resp.StatusCode, string(body))
 			writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 			return
 		}
 		pretty, err := json.MarshalIndent(payload, "", "  ")
 		if err != nil {
-			log.Printf("callback health response status=%d body=%s", resp.StatusCode, string(body))
+			log.Printf("[handleCallbackHealth] response status=%d body=%s", resp.StatusCode, string(body))
 			writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 			return
 		}
-		log.Printf("callback health response status=%d json=%s", resp.StatusCode, string(pretty))
+		log.Printf("[handleCallbackHealth] response status=%d json=%s", resp.StatusCode, string(pretty))
 	} else {
-		log.Printf("callback health response status=%d body=%s", resp.StatusCode, string(body))
+		log.Printf("[handleCallbackHealth] response status=%d body=%s", resp.StatusCode, string(body))
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }

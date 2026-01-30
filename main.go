@@ -8,7 +8,7 @@ import (
 func main() {
 	loadDotEnv(".env")
 	addr := getenv("PORT", "8080")
-	log.Printf("xendit-api-mock listening on :%s", addr)
+	log.Printf("[main] xendit-api-mock listening on :%s", addr)
 
 	s := newServer()
 	mux := http.NewServeMux()
