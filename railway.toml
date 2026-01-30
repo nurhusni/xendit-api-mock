@@ -3,5 +3,5 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/healthz"
+healthcheckPath = "/xendit/healthz"
 healthcheckTimeout = 5
