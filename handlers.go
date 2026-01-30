@@ -142,7 +142,7 @@ func (s *server) handleCreateDisbursement(w http.ResponseWriter, r *http.Request
 
 	req, err := decodeDisbursementRequest(r)
 	if err != nil {
-		log.Printf("disbursement request decode failed: %v", err)
+		log.Printf("[handleCreateDisbursement] decode failed: %v", err)
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
@@ -151,7 +151,7 @@ func (s *server) handleCreateDisbursement(w http.ResponseWriter, r *http.Request
 
 	resp := buildDisbursementResponse(req, status)
 	if err := sendCallback(req, status); err != nil {
-		log.Printf("callback failed: %v", err)
+		log.Printf("[handleCreateDisbursement] callback failed: %v", err)
 	}
 
 	writeJSON(w, http.StatusOK, resp)
@@ -165,7 +165,7 @@ func (s *server) handleSimulateSuccess(w http.ResponseWriter, r *http.Request) {
 
 	req, err := decodeDisbursementRequest(r)
 	if err != nil {
-		log.Printf("simulate success request decode failed: %v", err)
+		log.Printf("[handleSimulateSuccess] decode failed: %v", err)
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
@@ -173,7 +173,7 @@ func (s *server) handleSimulateSuccess(w http.ResponseWriter, r *http.Request) {
 	status := normalizeStatus("COMPLETED")
 	resp := buildDisbursementResponse(req, status)
 	if err := sendCallback(req, status); err != nil {
-		log.Printf("callback failed: %v", err)
+		log.Printf("[handleSimulateSuccess] callback failed: %v", err)
 	}
 
 	writeJSON(w, http.StatusOK, resp)
@@ -313,6 +313,7 @@ func sendCallback(req disbursementRequest, status string) error {
 		return err
 	}
 	request.Header.Set("Content-Type", "application/json")
+	log.Printf("[sendCallback] request method=%s url=%s body=%s", request.Method, request.URL.String(), formatBody(body))
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(request)
@@ -320,6 +321,14 @@ func sendCallback(req disbursementRequest, status string) error {
 		return err
 	}
 	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("[sendCallback] response read failed status=%d error=%v", resp.StatusCode, err)
+		return nil
+	}
+
+	log.Printf("[sendCallback] response method=%s url=%s status=%d body=%s", request.Method, request.URL.String(), resp.StatusCode, formatBody(respBody))
 
 	return nil
 }
