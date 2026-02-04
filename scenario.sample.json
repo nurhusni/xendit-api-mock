@@ -1,22 +1,22 @@
 {
   "retry_timeout_minutes": 60,
-  "accounts": [],
+  "accounts": [
+    {
+      "account_number": "1234567890",
+      "disbursements": [
+        {"external_id": "ext-override", "outcome": "fail_then_succeed", "retry_success_at": 1},
+        {"external_id": "", "outcome": "success"}
+      ]
+    }
+  ],
   "batches": [
     {
       "topup_id": "TOPUP-001",
       "account_number": "1234567890",
       "disbursements": [
         {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-
         {"external_id": "", "outcome": "fail_then_succeed", "retry_success_at": 1},
-        {"external_id": "", "outcome": "fail_then_succeed", "retry_success_at": 1},
-        {"external_id": "", "outcome": "fail_then_succeed", "retry_success_at": 2},
-        {"external_id": "", "outcome": "fail_then_succeed", "retry_success_at": 3},
-        {"external_id": "", "outcome": "fail_then_succeed", "retry_success_at": 4}
+        {"external_id": "", "outcome": "fail_until_timeout"}
       ]
     },
     {
@@ -24,15 +24,7 @@
       "account_number": "1234567890",
       "disbursements": [
         {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "success"},
-        {"external_id": "", "outcome": "fail_until_timeout"}
+        {"external_id": "", "outcome": "success"}
       ]
     }
   ]

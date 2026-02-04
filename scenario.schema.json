@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Xendit API Mock Scenario",
+  "type": "object",
+  "description": "Scenario configuration for the Xendit disbursement mock.",
+  "properties": {
+    "retry_timeout_minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 60,
+      "description": "Parsed and defaulted to 60. Time-based timeout is reserved for future behavior."
+    },
+    "accounts": {
+      "type": "array",
+      "description": "Account-specific rules matched by account_number.",
+      "items": {"$ref": "#/$defs/accountScenario"}
+    },
+    "batches": {
+      "type": "array",
+      "description": "Batch-specific rules matched by topup_id + account_number.",
+      "items": {"$ref": "#/$defs/batchScenario"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "accountScenario": {
+      "type": "object",
+      "properties": {
+        "account_number": {
+          "type": "string",
+          "minLength": 1
+        },
+        "disbursements": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/rule"}
+        }
+      },
+      "required": ["account_number", "disbursements"],
+      "additionalProperties": false
+    },
+    "batchScenario": {
+      "type": "object",
+      "properties": {
+        "topup_id": {
+          "type": "string",
+          "description": "Matches the disbursement description field."
+        },
+        "account_number": {
+          "type": "string",
+          "minLength": 1
+        },
+        "disbursements": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/rule"}
+        }
+      },
+      "required": ["account_number", "disbursements"],
+      "additionalProperties": false
+    },
+    "rule": {
+      "type": "object",
+      "properties": {
+        "external_id": {
+          "type": "string",
+          "description": "Exact match when set; empty string means order-based rule."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": ["success", "fail_then_succeed", "fail_until_timeout"]
+        },
+        "retry_success_at": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Attempt count at which fail_then_succeed flips to COMPLETED."
+        }
+      },
+      "required": ["outcome"],
+      "additionalProperties": false
+    }
+  }
+}

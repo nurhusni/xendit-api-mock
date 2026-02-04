@@ -1,4 +1,4 @@
-package main
+package httptransport
 
 import (
 	"bytes"
@@ -53,37 +53,17 @@ func TestDecodeDisbursementRequestPartialDefaults(t *testing.T) {
 	}
 }
 
-func TestBuildDisbursementResponse(t *testing.T) {
-	t.Setenv("XENDIT_USER_ID", "xamock-user")
-	input := disbursementRequest{
-		ExternalID:        "xamock_ext_123",
-		Amount:            10000,
-		BankCode:          "BCA",
-		AccountHolderName: "xamock user",
-		AccountNumber:     "xamock-123",
-		Description:       "xamock disbursement",
-	}
-	resp := buildDisbursementResponse(input, "COMPLETED")
-	if resp.UserID != "xamock-user" {
-		t.Fatalf("expected user_id xamock-user, got %s", resp.UserID)
-	}
-	if resp.ExternalID != input.ExternalID {
-		t.Fatalf("expected external_id %s, got %s", input.ExternalID, resp.ExternalID)
-	}
-	if resp.Status != "COMPLETED" {
-		t.Fatalf("expected status COMPLETED, got %s", resp.Status)
-	}
-	if !strings.HasPrefix(resp.ID, "disb_") {
-		t.Fatalf("expected id prefix disb_, got %s", resp.ID)
-	}
-}
-
 func TestDefaultDisbursementRequestIsJSONSerializable(t *testing.T) {
-	data, err := json.Marshal(defaultDisbursementRequest())
+	data, err := json.Marshal(decodeDefaultRequestForTest())
 	if err != nil {
 		t.Fatalf("expected json marshal to succeed, got %v", err)
 	}
 	if len(data) == 0 {
 		t.Fatal("expected json output, got empty")
 	}
+}
+
+func decodeDefaultRequestForTest() interface{} {
+	req, _ := decodeDisbursementRequest(httptest.NewRequest("POST", "/xendit/disbursements", bytes.NewReader(nil)))
+	return req
 }

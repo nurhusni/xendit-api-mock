@@ -1,10 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"strings"
+
+	"xendit-api-mock/internal/scenario"
 )
 
 func getenv(key, fallback string) string {
@@ -40,26 +41,16 @@ func loadDotEnv(path string) {
 	}
 }
 
-func loadScenario(path string) *scenarioConfig {
+func loadScenario(path string) *scenario.Config {
 	if path == "" {
 		return nil
 	}
 
-	file, err := os.ReadFile(path)
+	cfg, err := scenario.LoadConfig(path)
 	if err != nil {
-		log.Printf("[loadScenario] failed to read scenario file: %v", err)
+		log.Printf("[loadScenario] failed to load scenario file: %v", err)
 		return nil
 	}
 
-	var cfg scenarioConfig
-	if err := json.Unmarshal(file, &cfg); err != nil {
-		log.Printf("[loadScenario] failed to parse scenario file: %v", err)
-		return nil
-	}
-
-	if cfg.RetryTimeoutMinutes == 0 {
-		cfg.RetryTimeoutMinutes = 60
-	}
-
-	return &cfg
+	return cfg
 }
