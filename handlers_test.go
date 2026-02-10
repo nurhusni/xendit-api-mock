@@ -260,6 +260,38 @@ func TestHandleCreateDisbursementResponseBody(t *testing.T) {
 	}
 }
 
+func TestHandleCreateDisbursementDoubleSlashPathKeepsPostAndBody(t *testing.T) {
+	callbackSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer callbackSrv.Close()
+
+	t.Setenv("CALLBACK_URL", callbackSrv.URL)
+	mux := http.NewServeMux()
+	newTestHandler().RegisterRoutes(mux)
+	serverHandler := withDisbursementDoubleSlashAlias(mux)
+
+	reqBody := `{"external_id":"ext-double-slash","amount":12345,"bank_code":"BCA","account_holder_name":"Mock User","account_number":"123","description":"topup-double-slash"}`
+	req := httptest.NewRequest(http.MethodPost, "/xendit//disbursements", strings.NewReader(reqBody))
+	resp := httptest.NewRecorder()
+	serverHandler.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.Code)
+	}
+
+	var payload domain.DisbursementResponse
+	if err := json.Unmarshal(resp.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("expected json body, got error %v", err)
+	}
+	if payload.ExternalID != "ext-double-slash" {
+		t.Fatalf("expected external_id ext-double-slash, got %s", payload.ExternalID)
+	}
+	if payload.Amount != 12345 {
+		t.Fatalf("expected amount 12345, got %d", payload.Amount)
+	}
+}
+
 func TestHandleSimulateSuccessResponseBody(t *testing.T) {
 	callbackSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

@@ -27,8 +27,24 @@ func main() {
 
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)
+	serverHandler := withDisbursementDoubleSlashAlias(mux)
 
-	if err := http.ListenAndServe(":"+addr, mux); err != nil {
+	if err := http.ListenAndServe(":"+addr, serverHandler); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func withDisbursementDoubleSlashAlias(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost && r.URL.Path == "/xendit//disbursements" {
+			cloned := r.Clone(r.Context())
+			urlCopy := *r.URL
+			urlCopy.Path = "/xendit/disbursements"
+			cloned.URL = &urlCopy
+			next.ServeHTTP(w, cloned)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
