@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -173,6 +174,22 @@ func TestHandleCreateDisbursementCallbackPayload(t *testing.T) {
 	if payload.Status != "FAILED" {
 		t.Fatalf("expected FAILED on first attempt, got %s", payload.Status)
 	}
+	allowedFailureCodes := []string{
+		"TEMPORARY_BANK_NETWORK_ERROR",
+		"SWITCHING_NETWORK_ERROR",
+		"TEMPORARY_TRANSFER_ERROR",
+		"UNKNOWN_BANK_NETWORK_ERROR",
+		"INSUFFICIENT_BALANCE",
+		"INVALID_DESTINATION",
+		"TRANSFER_ERROR",
+		"REJECTED_BY_BANK",
+	}
+	if payload.FailureCode == "" {
+		t.Fatal("expected failure_code on FAILED callback")
+	}
+	if !slices.Contains(allowedFailureCodes, payload.FailureCode) {
+		t.Fatalf("expected valid failure_code, got %s", payload.FailureCode)
+	}
 	if token != "token123" {
 		t.Fatalf("expected callback token, got %s", token)
 	}
@@ -198,6 +215,9 @@ func TestHandleSimulateSuccessCallbackPayload(t *testing.T) {
 	}
 	if payload.Status != "COMPLETED" {
 		t.Fatalf("expected COMPLETED, got %s", payload.Status)
+	}
+	if payload.FailureCode != "" {
+		t.Fatalf("expected empty failure_code for COMPLETED callback, got %s", payload.FailureCode)
 	}
 }
 

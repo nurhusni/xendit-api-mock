@@ -2,8 +2,10 @@ package domain
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"time"
 )
 
@@ -11,6 +13,17 @@ const (
 	StatusCompleted = "COMPLETED"
 	StatusFailed    = "FAILED"
 )
+
+var failedDisbursementCodes = [...]string{
+	"TEMPORARY_BANK_NETWORK_ERROR",
+	"SWITCHING_NETWORK_ERROR",
+	"TEMPORARY_TRANSFER_ERROR",
+	"UNKNOWN_BANK_NETWORK_ERROR",
+	"INSUFFICIENT_BALANCE",
+	"INVALID_DESTINATION",
+	"TRANSFER_ERROR",
+	"REJECTED_BY_BANK",
+}
 
 type DisbursementRequest struct {
 	ExternalID        string   `json:"external_id"`
@@ -115,6 +128,10 @@ func BuildCallbackPayload(req DisbursementRequest, status, userID string) Callba
 	status = NormalizeStatus(status)
 	now := time.Now().Format(time.RFC3339)
 	disbursementID := DisbursementID(req.ExternalID)
+	failureCode := ""
+	if status == StatusFailed {
+		failureCode = randomFailedDisbursementCode()
+	}
 	return CallbackPayload{
 		ID:                      disbursementID,
 		Created:                 now,
@@ -127,7 +144,17 @@ func BuildCallbackPayload(req DisbursementRequest, status, userID string) Callba
 		AccountNumber:           req.AccountNumber,
 		DisbursementDescription: req.Description,
 		Status:                  status,
+		FailureCode:             failureCode,
 		IsInstant:               false,
 		WebhookID:               WebhookID(disbursementID, status),
 	}
+}
+
+func randomFailedDisbursementCode() string {
+	max := big.NewInt(int64(len(failedDisbursementCodes)))
+	i, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return failedDisbursementCodes[0]
+	}
+	return failedDisbursementCodes[i.Int64()]
 }
