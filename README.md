@@ -43,6 +43,10 @@ Railway will build using the Dockerfile. Set these variables in Railway:
 - `PORT` (optional, Railway sets this automatically)
 - `XENDIT_USER_ID` (optional)
 - `RANDOM_STATUS` (optional, set to `true` to randomize COMPLETED/FAILED)
+- `IS_ALLOW_FAILED` (optional, default `true`; set `false` to force all statuses to `COMPLETED`)
+- `IS_ALLOW_NON_RETRYABLE` (optional, default `true`; set `false` to exclude `INSUFFICIENT_BALANCE`, `INVALID_DESTINATION`, `TRANSFER_ERROR`)
+- `IS_ALLOW_FAILURE_WITH_5_MINS` (optional, default `true`; set `false` to exclude `UNKNOWN_BANK_NETWORK_ERROR`, `REJECTED_BY_BANK`)
+- `IS_ALLOW_FAILURE_WITH_70_MINS` (optional, default `true`; set `false` to exclude `TEMPORARY_BANK_NETWORK_ERROR`, `SWITCHING_NETWORK_ERROR`, `TEMPORARY_TRANSFER_ERROR`)
 
 ## Expose via ngrok
 

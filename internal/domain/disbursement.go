@@ -14,6 +14,22 @@ const (
 	StatusFailed    = "FAILED"
 )
 
+type FeatureFlags struct {
+	AllowFailed            bool
+	AllowNonRetryable      bool
+	AllowFailureWith5Mins  bool
+	AllowFailureWith70Mins bool
+}
+
+var defaultFeatureFlags = FeatureFlags{
+	AllowFailed:            true,
+	AllowNonRetryable:      true,
+	AllowFailureWith5Mins:  true,
+	AllowFailureWith70Mins: true,
+}
+
+var featureFlags = defaultFeatureFlags
+
 var failedDisbursementCodes = [...]string{
 	"TEMPORARY_BANK_NETWORK_ERROR",
 	"SWITCHING_NETWORK_ERROR",
@@ -23,6 +39,14 @@ var failedDisbursementCodes = [...]string{
 	"INVALID_DESTINATION",
 	"TRANSFER_ERROR",
 	"REJECTED_BY_BANK",
+}
+
+func SetFeatureFlags(flags FeatureFlags) {
+	featureFlags = flags
+}
+
+func DefaultFeatureFlags() FeatureFlags {
+	return defaultFeatureFlags
 }
 
 type DisbursementRequest struct {
@@ -72,6 +96,9 @@ type CallbackPayload struct {
 }
 
 func NormalizeStatus(status string) string {
+	if !featureFlags.AllowFailed {
+		return StatusCompleted
+	}
 	if status == StatusCompleted {
 		return StatusCompleted
 	}
@@ -106,6 +133,7 @@ func DefaultDisbursementRequest() DisbursementRequest {
 }
 
 func BuildDisbursementResponse(req DisbursementRequest, status, userID string) DisbursementResponse {
+	status = NormalizeStatus(status)
 	now := time.Now().Format(time.RFC3339)
 	return DisbursementResponse{
 		ID:                      DisbursementID(req.ExternalID),
@@ -151,10 +179,41 @@ func BuildCallbackPayload(req DisbursementRequest, status, userID string) Callba
 }
 
 func randomFailedDisbursementCode() string {
-	max := big.NewInt(int64(len(failedDisbursementCodes)))
+	codes := filteredFailedDisbursementCodes()
+	if len(codes) == 0 {
+		return ""
+	}
+
+	max := big.NewInt(int64(len(codes)))
 	i, err := rand.Int(rand.Reader, max)
 	if err != nil {
-		return failedDisbursementCodes[0]
+		return codes[0]
 	}
-	return failedDisbursementCodes[i.Int64()]
+	return codes[i.Int64()]
+}
+
+func filteredFailedDisbursementCodes() []string {
+	filtered := make([]string, 0, len(failedDisbursementCodes))
+	for _, code := range failedDisbursementCodes {
+		if !featureFlags.AllowNonRetryable {
+			switch code {
+			case "INSUFFICIENT_BALANCE", "INVALID_DESTINATION", "TRANSFER_ERROR":
+				continue
+			}
+		}
+		if !featureFlags.AllowFailureWith5Mins {
+			switch code {
+			case "UNKNOWN_BANK_NETWORK_ERROR", "REJECTED_BY_BANK":
+				continue
+			}
+		}
+		if !featureFlags.AllowFailureWith70Mins {
+			switch code {
+			case "TEMPORARY_BANK_NETWORK_ERROR", "SWITCHING_NETWORK_ERROR", "TEMPORARY_TRANSFER_ERROR":
+				continue
+			}
+		}
+		filtered = append(filtered, code)
+	}
+	return filtered
 }

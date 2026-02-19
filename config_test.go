@@ -16,6 +16,29 @@ func TestGetenv(t *testing.T) {
 	}
 }
 
+func TestGetenvBool(t *testing.T) {
+	t.Setenv("BOOL_TRUE", "true")
+	t.Setenv("BOOL_FALSE", "false")
+	t.Setenv("BOOL_INVALID", "not-bool")
+	t.Setenv("BOOL_UPPER", "TRUE")
+
+	if got := getenvBool("BOOL_TRUE", false); !got {
+		t.Fatalf("expected true, got false")
+	}
+	if got := getenvBool("BOOL_FALSE", true); got {
+		t.Fatalf("expected false, got true")
+	}
+	if got := getenvBool("BOOL_INVALID", true); !got {
+		t.Fatalf("expected fallback true for invalid bool")
+	}
+	if got := getenvBool("MISSING_BOOL", false); got {
+		t.Fatalf("expected fallback false for missing bool")
+	}
+	if got := getenvBool("BOOL_UPPER", false); !got {
+		t.Fatalf("expected true for uppercase bool")
+	}
+}
+
 func TestLoadDotEnvSetsValues(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".env")
