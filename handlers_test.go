@@ -22,9 +22,11 @@ func newTestHandler() *httptransport.Handler {
 	engine := scenario.NewEngine(nil)
 	callbackURL := getenv("CALLBACK_URL", "")
 	callbackToken := getenv("CALLBACK_TOKEN", "")
+	disableCallbacks := getenvBool("DISABLE_CALLBACKS", false)
+	allowFailedDisbursementCall := getenvBool("ALLOW_FAILED_DISBURSEMENT_CALL", false)
 	userID := getenv("XENDIT_USER_ID", "user_mock")
 	cbClient := callback.NewClient(callbackURL, callbackToken, nil)
-	service := disbursement.NewService(engine, cbClient, userID)
+	service := disbursement.NewService(engine, cbClient, userID, disableCallbacks, allowFailedDisbursementCall)
 	return httptransport.NewHandler(service, callbackURL)
 }
 
@@ -145,6 +147,47 @@ func TestHandleCreateDisbursementInvalidJSON(t *testing.T) {
 	mux.ServeHTTP(resp, req)
 	if resp.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", resp.Code)
+	}
+}
+
+func TestHandleCreateDisbursementFailedCallFlagReturns500(t *testing.T) {
+	t.Setenv("ALLOW_FAILED_DISBURSEMENT_CALL", "true")
+
+	mux := http.NewServeMux()
+	newTestHandler().RegisterRoutes(mux)
+	reqBody := `{"external_id":"ext-flag","amount":100}`
+	req := httptest.NewRequest(http.MethodPost, "/xendit/disbursements", strings.NewReader(reqBody))
+	resp := httptest.NewRecorder()
+	mux.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", resp.Code)
+	}
+}
+
+func TestHandleCreateDisbursementDisableCallbacksSkipsCallback(t *testing.T) {
+	callbackCount := 0
+	callbackSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callbackCount++
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer callbackSrv.Close()
+
+	t.Setenv("CALLBACK_URL", callbackSrv.URL)
+	t.Setenv("DISABLE_CALLBACKS", "true")
+
+	mux := http.NewServeMux()
+	newTestHandler().RegisterRoutes(mux)
+	reqBody := `{"external_id":"ext-disable-cb","amount":100}`
+	req := httptest.NewRequest(http.MethodPost, "/xendit/disbursements", strings.NewReader(reqBody))
+	resp := httptest.NewRecorder()
+	mux.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.Code)
+	}
+	if callbackCount != 0 {
+		t.Fatalf("expected no callback when DISABLE_CALLBACKS is enabled, got %d", callbackCount)
 	}
 }
 

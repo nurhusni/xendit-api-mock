@@ -92,6 +92,11 @@ func (h *Handler) handleCreateDisbursement(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	if h.service.AllowFailedDisbursementCall() {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "ALLOW_FAILED_DISBURSEMENT_CALL is enabled"})
+		return
+	}
+
 	req, err := decodeDisbursementRequest(r)
 	if err != nil {
 		log.Printf("[handleCreateDisbursement] decode failed: %v", err)
