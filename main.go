@@ -29,8 +29,8 @@ func main() {
 
 	callbackURL := getenv("CALLBACK_URL", "")
 	callbackToken := getenv("CALLBACK_TOKEN", "")
-	disableCallbacks := getenvBool("DISABLE_CALLBACKS", false)
-	allowFailedDisbursementCall := getenvBool("ALLOW_FAILED_DISBURSEMENT_CALL", false)
+	disableCallbacks := getenvBool("IS_DISABLE_CALLBACKS", false)
+	allowFailedDisbursementCall := getenvBool("IS_ALLOW_FAILED_DISBURSEMENT_REQUEST", false)
 	callbackClient := callback.NewClient(callbackURL, callbackToken, nil)
 	userID := getenv("XENDIT_USER_ID", "user_mock")
 	service := disbursement.NewService(engine, callbackClient, userID, disableCallbacks, allowFailedDisbursementCall)

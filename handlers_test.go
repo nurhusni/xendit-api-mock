@@ -22,8 +22,8 @@ func newTestHandler() *httptransport.Handler {
 	engine := scenario.NewEngine(nil)
 	callbackURL := getenv("CALLBACK_URL", "")
 	callbackToken := getenv("CALLBACK_TOKEN", "")
-	disableCallbacks := getenvBool("DISABLE_CALLBACKS", false)
-	allowFailedDisbursementCall := getenvBool("ALLOW_FAILED_DISBURSEMENT_CALL", false)
+	disableCallbacks := getenvBool("IS_DISABLE_CALLBACKS", false)
+	allowFailedDisbursementCall := getenvBool("IS_ALLOW_FAILED_DISBURSEMENT_REQUEST", false)
 	userID := getenv("XENDIT_USER_ID", "user_mock")
 	cbClient := callback.NewClient(callbackURL, callbackToken, nil)
 	service := disbursement.NewService(engine, cbClient, userID, disableCallbacks, allowFailedDisbursementCall)
@@ -151,7 +151,7 @@ func TestHandleCreateDisbursementInvalidJSON(t *testing.T) {
 }
 
 func TestHandleCreateDisbursementFailedCallFlagReturns500(t *testing.T) {
-	t.Setenv("ALLOW_FAILED_DISBURSEMENT_CALL", "true")
+	t.Setenv("IS_ALLOW_FAILED_DISBURSEMENT_REQUEST", "true")
 
 	mux := http.NewServeMux()
 	newTestHandler().RegisterRoutes(mux)
@@ -174,7 +174,7 @@ func TestHandleCreateDisbursementDisableCallbacksSkipsCallback(t *testing.T) {
 	defer callbackSrv.Close()
 
 	t.Setenv("CALLBACK_URL", callbackSrv.URL)
-	t.Setenv("DISABLE_CALLBACKS", "true")
+	t.Setenv("IS_DISABLE_CALLBACKS", "true")
 
 	mux := http.NewServeMux()
 	newTestHandler().RegisterRoutes(mux)
@@ -187,7 +187,7 @@ func TestHandleCreateDisbursementDisableCallbacksSkipsCallback(t *testing.T) {
 		t.Fatalf("expected 200, got %d", resp.Code)
 	}
 	if callbackCount != 0 {
-		t.Fatalf("expected no callback when DISABLE_CALLBACKS is enabled, got %d", callbackCount)
+		t.Fatalf("expected no callback when IS_DISABLE_CALLBACKS is enabled, got %d", callbackCount)
 	}
 }
 

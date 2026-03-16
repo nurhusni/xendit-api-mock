@@ -93,7 +93,7 @@ func (h *Handler) handleCreateDisbursement(w http.ResponseWriter, r *http.Reques
 	}
 
 	if h.service.AllowFailedDisbursementCall() {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "ALLOW_FAILED_DISBURSEMENT_CALL is enabled"})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "IS_ALLOW_FAILED_DISBURSEMENT_REQUEST is enabled"})
 		return
 	}
 
