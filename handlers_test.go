@@ -24,9 +24,19 @@ func newTestHandler() *httptransport.Handler {
 	callbackToken := getenv("CALLBACK_TOKEN", "")
 	disableCallbacks := getenvBool("IS_DISABLE_CALLBACKS", false)
 	allowFailedDisbursementCall := getenvBool("IS_ALLOW_FAILED_DISBURSEMENT_REQUEST", false)
+	allowFailedGetDisbursementRequest := getenvBool("IS_ALLOW_FAILED_GET_DISBURSEMENT_REQUEST", false)
+	randomGetDisbursementStatus := getenvBool("IS_RANDOM_GET_DISBURSEMENT_STATUS", true)
 	userID := getenv("XENDIT_USER_ID", "user_mock")
 	cbClient := callback.NewClient(callbackURL, callbackToken, nil)
-	service := disbursement.NewService(engine, cbClient, userID, disableCallbacks, allowFailedDisbursementCall)
+	service := disbursement.NewService(
+		engine,
+		cbClient,
+		userID,
+		disableCallbacks,
+		allowFailedDisbursementCall,
+		allowFailedGetDisbursementRequest,
+		randomGetDisbursementStatus,
+	)
 	return httptransport.NewHandler(service, callbackURL)
 }
 
@@ -147,6 +157,95 @@ func TestHandleCreateDisbursementInvalidJSON(t *testing.T) {
 	mux.ServeHTTP(resp, req)
 	if resp.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", resp.Code)
+	}
+}
+
+func TestHandleGetDisbursementMissingExternalID(t *testing.T) {
+	mux := http.NewServeMux()
+	newTestHandler().RegisterRoutes(mux)
+	req := httptest.NewRequest(http.MethodGet, "/xendit/disbursements", nil)
+	resp := httptest.NewRecorder()
+	mux.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", resp.Code)
+	}
+}
+
+func TestHandleGetDisbursementFailedRequestFlagReturns400(t *testing.T) {
+	t.Setenv("IS_ALLOW_FAILED_GET_DISBURSEMENT_REQUEST", "true")
+
+	mux := http.NewServeMux()
+	newTestHandler().RegisterRoutes(mux)
+	req := httptest.NewRequest(http.MethodGet, "/xendit/disbursements?external_id=ext-get-flag", nil)
+	resp := httptest.NewRecorder()
+	mux.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", resp.Code)
+	}
+}
+
+func TestHandleGetDisbursementResponseBody(t *testing.T) {
+	t.Setenv("IS_RANDOM_GET_DISBURSEMENT_STATUS", "false")
+	t.Setenv("XENDIT_USER_ID", "xamock-user")
+
+	mux := http.NewServeMux()
+	newTestHandler().RegisterRoutes(mux)
+	req := httptest.NewRequest(http.MethodGet, "/xendit/disbursements?external_id=ext-get-1", nil)
+	resp := httptest.NewRecorder()
+	mux.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.Code)
+	}
+
+	var payload domain.CallbackPayload
+	if err := json.Unmarshal(resp.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("expected json body, got error %v", err)
+	}
+	if payload.ExternalID != "ext-get-1" {
+		t.Fatalf("expected external_id ext-get-1, got %s", payload.ExternalID)
+	}
+	if payload.Status != "COMPLETED" {
+		t.Fatalf("expected status COMPLETED when random get status is disabled, got %s", payload.Status)
+	}
+	if payload.FailureCode != "" {
+		t.Fatalf("expected empty failure_code for COMPLETED status, got %s", payload.FailureCode)
+	}
+	if payload.UserID != "xamock-user" {
+		t.Fatalf("expected user_id xamock-user, got %s", payload.UserID)
+	}
+	if payload.ID == "" || !strings.HasPrefix(payload.ID, "disb_") {
+		t.Fatalf("expected id with disb_ prefix, got %s", payload.ID)
+	}
+}
+
+func TestHandleGetDisbursementRandomStatusAndFailureCode(t *testing.T) {
+	mux := http.NewServeMux()
+	newTestHandler().RegisterRoutes(mux)
+	req := httptest.NewRequest(http.MethodGet, "/xendit/disbursements?external_id=ext-get-random", nil)
+	resp := httptest.NewRecorder()
+	mux.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.Code)
+	}
+
+	var payload domain.CallbackPayload
+	if err := json.Unmarshal(resp.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("expected json body, got error %v", err)
+	}
+
+	if payload.Status != "COMPLETED" && payload.Status != "FAILED" {
+		t.Fatalf("expected status COMPLETED or FAILED, got %s", payload.Status)
+	}
+	if payload.Status == "FAILED" {
+		if payload.FailureCode == "" {
+			t.Fatal("expected failure_code for FAILED status")
+		}
+	} else if payload.FailureCode != "" {
+		t.Fatalf("expected empty failure_code for COMPLETED status, got %s", payload.FailureCode)
 	}
 }
 

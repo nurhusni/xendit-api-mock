@@ -192,6 +192,18 @@ func randomFailedDisbursementCode() string {
 	return codes[i.Int64()]
 }
 
+func RandomStatus() string {
+	max := big.NewInt(2)
+	i, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return StatusCompleted
+	}
+	if i.Int64() == 0 {
+		return StatusCompleted
+	}
+	return StatusFailed
+}
+
 func filteredFailedDisbursementCodes() []string {
 	filtered := make([]string, 0, len(failedDisbursementCodes))
 	for _, code := range failedDisbursementCodes {

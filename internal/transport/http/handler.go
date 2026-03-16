@@ -87,11 +87,17 @@ func (h *Handler) handleCallbackHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleCreateDisbursement(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+	switch r.Method {
+	case http.MethodPost:
+		h.handleCreateDisbursementPost(w, r)
+	case http.MethodGet:
+		h.handleGetDisbursement(w, r)
+	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
 	}
+}
 
+func (h *Handler) handleCreateDisbursementPost(w http.ResponseWriter, r *http.Request) {
 	if h.service.AllowFailedDisbursementCall() {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "IS_ALLOW_FAILED_DISBURSEMENT_REQUEST is enabled"})
 		return
@@ -109,6 +115,22 @@ func (h *Handler) handleCreateDisbursement(w http.ResponseWriter, r *http.Reques
 		log.Printf("[handleCreateDisbursement] callback failed: %v", cbErr)
 	}
 
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *Handler) handleGetDisbursement(w http.ResponseWriter, r *http.Request) {
+	if h.service.AllowFailedGetDisbursementRequest() {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "IS_ALLOW_FAILED_GET_DISBURSEMENT_REQUEST is enabled"})
+		return
+	}
+
+	externalID := r.URL.Query().Get("external_id")
+	if externalID == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "external_id is required"})
+		return
+	}
+
+	resp := h.service.GetByExternalID(externalID)
 	writeJSON(w, http.StatusOK, resp)
 }
 

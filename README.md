@@ -8,6 +8,7 @@ Behavior
 
 Endpoints
 - `POST /xendit/disbursements`
+- `GET /xendit/disbursements?external_id={external_id}`
 - `GET /xendit/healthz`
 - `GET /xendit/healthz-callback`
 - `POST /xendit/simulate/success`
@@ -39,16 +40,45 @@ docker compose up --build
 
 Railway will build using the Dockerfile. Set these variables in Railway:
 
-- `CALLBACK_URL` (required)
-- `PORT` (optional, Railway sets this automatically)
-- `XENDIT_USER_ID` (optional)
-- `RANDOM_STATUS` (optional, set to `true` to randomize COMPLETED/FAILED)
-- `IS_ALLOW_FAILED_DISBURSEMENT_REQUEST` (optional, default `false`; set `true` to make `POST /xendit/disbursements` return HTTP 500)
-- `IS_DISABLE_CALLBACKS` (optional, default `false`; set `true` to skip callback POSTs after `POST /xendit/disbursements`)
-- `IS_ALLOW_FAILED` (optional, default `true`; set `false` to force all statuses to `COMPLETED`)
-- `IS_ALLOW_NON_RETRYABLE` (optional, default `true`; set `false` to exclude `INSUFFICIENT_BALANCE`, `INVALID_DESTINATION`, `TRANSFER_ERROR`)
-- `IS_ALLOW_FAILURE_WITH_5_MINS` (optional, default `true`; set `false` to exclude `UNKNOWN_BANK_NETWORK_ERROR`, `REJECTED_BY_BANK`)
-- `IS_ALLOW_FAILURE_WITH_70_MINS` (optional, default `true`; set `false` to exclude `TEMPORARY_BANK_NETWORK_ERROR`, `SWITCHING_NETWORK_ERROR`, `TEMPORARY_TRANSFER_ERROR`)
+- Runtime / identity scope:
+  - `PORT` (optional, Railway sets this automatically)
+  - `XENDIT_USER_ID` (optional)
+
+- Callback integration scope:
+  - `CALLBACK_URL` (required for callback delivery)
+  - `CALLBACK_TOKEN` (optional callback auth token)
+
+- Global status and failure-code scope:
+  - `IS_ALLOW_FAILED` (optional, default `true`; set `false` to force all statuses to `COMPLETED`)
+  - `IS_ALLOW_NON_RETRYABLE` (optional, default `true`; set `false` to exclude `INSUFFICIENT_BALANCE`, `INVALID_DESTINATION`, `TRANSFER_ERROR`)
+  - `IS_ALLOW_FAILURE_WITH_5_MINS` (optional, default `true`; set `false` to exclude `UNKNOWN_BANK_NETWORK_ERROR`, `REJECTED_BY_BANK`)
+  - `IS_ALLOW_FAILURE_WITH_70_MINS` (optional, default `true`; set `false` to exclude `TEMPORARY_BANK_NETWORK_ERROR`, `SWITCHING_NETWORK_ERROR`, `TEMPORARY_TRANSFER_ERROR`)
+
+- POST `/xendit/disbursements` scope:
+  - `RANDOM_STATUS` (optional, default `true`; randomize status for POST disbursements)
+  - `IS_ALLOW_FAILED_DISBURSEMENT_REQUEST` (optional, default `false`; set `true` to return HTTP 500)
+  - `IS_DISABLE_CALLBACKS` (optional, default `false`; set `true` to skip callback POSTs and return directly)
+
+- GET `/xendit/disbursements` scope:
+  - `IS_RANDOM_GET_DISBURSEMENT_STATUS` (optional, default `true`; randomize response status/failure_code)
+  - `IS_ALLOW_FAILED_GET_DISBURSEMENT_REQUEST` (optional, default `false`; set `true` to return HTTP 400)
+
+## Feature flags
+
+- Global status/failure-code flags:
+  - `IS_ALLOW_FAILED`: when `false`, all statuses are forced to `COMPLETED`.
+  - `IS_ALLOW_NON_RETRYABLE`: when `false`, excludes non-retryable failure codes.
+  - `IS_ALLOW_FAILURE_WITH_5_MINS`: when `false`, excludes 5-minute retry failure codes.
+  - `IS_ALLOW_FAILURE_WITH_70_MINS`: when `false`, excludes 70-minute retry failure codes.
+
+- POST `/xendit/disbursements` flags:
+  - `RANDOM_STATUS`: randomizes POST disbursement status between `COMPLETED` and `FAILED`.
+  - `IS_ALLOW_FAILED_DISBURSEMENT_REQUEST`: when `true`, POST returns HTTP `500`.
+  - `IS_DISABLE_CALLBACKS`: when `true`, callback POSTs are skipped.
+
+- GET `/xendit/disbursements` flags:
+  - `IS_RANDOM_GET_DISBURSEMENT_STATUS`: randomizes GET response status and failure code.
+  - `IS_ALLOW_FAILED_GET_DISBURSEMENT_REQUEST`: when `true`, GET returns HTTP `400`.
 
 ## Expose via ngrok
 
