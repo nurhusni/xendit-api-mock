@@ -1,6 +1,7 @@
 package disbursement
 
 import (
+	"time"
 	"xendit-api-mock/internal/callback"
 	"xendit-api-mock/internal/domain"
 	"xendit-api-mock/internal/scenario"
@@ -62,7 +63,7 @@ func (s *Service) AllowFailedGetDisbursementRequest() bool {
 	return s.allowFailedGetDisbursementRequest
 }
 
-func (s *Service) GetByExternalID(externalID string) domain.CallbackPayload {
+func (s *Service) GetByExternalID(externalID string) []domain.CallbackPayload {
 	req := domain.DefaultDisbursementRequest()
 	req.ExternalID = externalID
 
@@ -71,5 +72,26 @@ func (s *Service) GetByExternalID(externalID string) domain.CallbackPayload {
 		status = domain.RandomStatus()
 	}
 
-	return domain.BuildCallbackPayload(req, status, s.userID)
+	now := time.Now().Format(time.RFC3339)
+	disbursementID := domain.DisbursementID(externalID)
+
+	var response []domain.CallbackPayload
+	response = append(response, domain.CallbackPayload{
+		ID:                      disbursementID,
+		Created:                 now,
+		Updated:                 now,
+		ExternalID:              req.ExternalID,
+		UserID:                  s.userID,
+		Amount:                  req.Amount,
+		BankCode:                req.BankCode,
+		AccountHolderName:       req.AccountHolderName,
+		AccountNumber:           req.AccountNumber,
+		DisbursementDescription: req.Description,
+		Status:                  status,
+		FailureCode:             "",
+		IsInstant:               false,
+		WebhookID:               domain.WebhookID(disbursementID, status),
+	})
+
+	return response
 }
